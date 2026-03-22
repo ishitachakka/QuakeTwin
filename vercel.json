@@ -9,7 +9,7 @@
   "routes": [
     {
       "src": "/",
-      "dest": "/clean/web/pavement-viewer.html"
+      "dest": "/clean/web/integrated-traffic-viewer.html"
     },
     {
       "src": "/(.*)",
