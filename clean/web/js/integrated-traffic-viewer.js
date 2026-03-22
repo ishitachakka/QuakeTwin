@@ -5,7 +5,8 @@ let trafficLayerActive = false;
 let activeTab = 'pavement';
 
 const FGCU_CENTER = { lat: 26.4622, lng: -81.7758 };
-const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://quaketwin-production.up.railway.app';
+const RAILWAY_BASE = 'https://quaketwin-production.up.railway.app';
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : RAILWAY_BASE;
 const USE_SIMULATED_QRL = false;
 
 // ─── Map Init ────────────────────────────────────────────────────────────────
@@ -142,7 +143,8 @@ async function analyzePavement() {
         const timeoutId  = setTimeout(() => controller.abort(), 10000);
 
         const t0 = performance.now();
-        const response = await fetch(API_BASE + '/api/pavement-condition', {
+        const pavementUrl = API_BASE + '/api/pavement-condition';
+        const response = await fetch(pavementUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
