@@ -3,145 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FGCU Integrated Traffic & Pavement Viewer - QRL ML (v2.2)</title>
-    
-    <!-- External CSS -->
-    <link rel="stylesheet" href="css/integrated-traffic-viewer.css?v=2.2">
+    <title>QuakeTwin - FGCU Infrastructure Monitor</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="stylesheet" href="css/integrated-traffic-viewer.css">
 </head>
 <body>
-    <!-- Navigation Bar -->
+
+    <!-- Top Navbar -->
     <div id="navbar">
-        <div>
-            <h1>🚦 FGCU Integrated Traffic & Pavement Viewer</h1>
-            <div class="subtitle">Real-time Traffic + QRL Pavement Analysis using Google Street View</div>
+        <div id="navbar-left">
+            <h1>QuakeTwin</h1>
+            <span class="nav-subtitle">FGCU Infrastructure Digital Twin</span>
         </div>
         <div id="status">
             <span class="status-dot"></span>
-            <span>Ready</span>
+            <span id="status-text">Ready – click map to analyze</span>
         </div>
     </div>
 
-    <!-- View Controls -->
-    <div class="view-controls">
-        <button class="view-btn" id="street-view-btn" onclick="toggleStreetView()">
-            📷 View Street View
-        </button>
-        <button class="view-btn" id="traffic-btn" onclick="toggleTraffic()">
-            🚦 Toggle Traffic Layer
-        </button>
-        <button class="view-btn" id="analyze-btn" onclick="analyzePavement()" style="background: rgba(138, 43, 226, 0.9);">
-            ⚛️ Analyze Pavement (QRL)
-        </button>
+    <!-- Left Sidebar -->
+    <div id="sidebar">
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tab-btn-pavement" onclick="switchTab('pavement')">🛣️ Pavement</button>
+            <button class="tab-btn" id="tab-btn-traffic"  onclick="switchTab('traffic')">🚦 Traffic</button>
+            <button class="tab-btn" id="tab-btn-security" onclick="switchTab('security')">🔐 QKD</button>
+        </div>
+
+        <!-- ── Pavement Tab ── -->
+        <div class="tab-content active" id="tab-pavement">
+
+            <p class="tab-hint">Click anywhere on the map to auto-analyze pavement condition.</p>
+
+            <div id="location-info" class="info-card" style="display:none;">
+                <div class="card-label">Location</div>
+                <div class="card-value" id="location-coords">--</div>
+                <div class="card-sub"   id="location-address"></div>
+            </div>
+
+            <div id="sv-thumb-wrap" style="display:none;">
+                <img id="sv-thumbnail" alt="Street View" />
+            </div>
+
+            <div id="loading" class="loading-row" style="display:none;">
+                <div class="spinner"></div>
+                <span>Running QRL analysis…</span>
+            </div>
+
+            <div id="pavement-results" style="display:none;">
+                <div class="result-card">
+                    <div class="card-label">Pavement Condition Index</div>
+                    <div class="pci-row">
+                        <span class="pci-number condition-good" id="pci-value">--</span>
+                        <span class="pci-denom">/ 100</span>
+                    </div>
+                </div>
+                <div class="result-card">
+                    <div class="card-label">Condition Rating</div>
+                    <span class="condition-pill condition-good" id="condition-rating">--</span>
+                </div>
+            </div>
+
+            <div id="analysis-details" style="display:none;"></div>
+
+        </div>
+
+        <!-- ── Traffic Tab ── -->
+        <div class="tab-content" id="tab-traffic">
+
+            <button class="action-btn" id="traffic-btn" onclick="toggleTraffic()">
+                🚦 Show Traffic Layer
+            </button>
+
+            <div class="section-title">Traffic Levels</div>
+            <div class="legend-list">
+                <div class="legend-row"><div class="color-swatch" style="background:#ff4444;"></div><span>Heavy – high congestion</span></div>
+                <div class="legend-row"><div class="color-swatch" style="background:#ff8c00;"></div><span>Moderate – some delays</span></div>
+                <div class="legend-row"><div class="color-swatch" style="background:#ffd700;"></div><span>Light – normal flow</span></div>
+                <div class="legend-row"><div class="color-swatch" style="background:#32cd32;"></div><span>Minimal – light traffic</span></div>
+            </div>
+
+            <div class="section-title" style="margin-top:16px;">QRL Risk Levels</div>
+            <div class="legend-list">
+                <div class="legend-row"><span class="emoji-swatch">🟢</span><span>NORMAL – Excellent</span></div>
+                <div class="legend-row"><span class="emoji-swatch">🟡</span><span>WATCH – Monitor</span></div>
+                <div class="legend-row"><span class="emoji-swatch">🟠</span><span>CONGESTED – Action needed</span></div>
+                <div class="legend-row"><span class="emoji-swatch">🔴</span><span>CRITICAL – Urgent repair</span></div>
+            </div>
+
+            <div id="traffic-data" class="info-card" style="display:none; margin-top:16px;">
+                <div class="card-label">Live Traffic Data</div>
+                <div class="metric-row"><span class="metric-label">Volume</span>   <span class="metric-value" id="traffic-volume">--</span></div>
+                <div class="metric-row"><span class="metric-label">Level</span>    <span class="metric-value" id="traffic-level">--</span></div>
+                <div class="metric-row"><span class="metric-label">Speed (mph)</span><span class="metric-value" id="traffic-speed">--</span></div>
+            </div>
+
+            <div class="footer-note">Last update: <span id="last-update">--:--</span></div>
+
+        </div>
+
+        <!-- ── Network Security / QKD Tab ── -->
+        <div class="tab-content" id="tab-security">
+
+            <!-- Network Health -->
+            <div class="sec-group">
+                <div class="sec-group-title">📡 Network Health</div>
+                <div class="metric-row"><span class="metric-label">Latency</span>     <span class="metric-value" id="net-latency">-- ms</span></div>
+                <div class="mini-bar"><div class="mini-bar-fill" id="net-latency-bar" style="width:0%"></div></div>
+                <div class="metric-row"><span class="metric-label">Packet Loss</span> <span class="metric-value" id="net-packet-loss">-- %</span></div>
+                <div class="mini-bar"><div class="mini-bar-fill" id="net-packet-bar"  style="width:0%;background:#ff8c00;"></div></div>
+                <div class="metric-row"><span class="metric-label">Active Nodes</span><span class="metric-value" id="net-nodes">--</span></div>
+                <div id="node-status-grid" class="node-grid"></div>
+            </div>
+
+            <!-- Threat Detection -->
+            <div class="sec-group">
+                <div class="sec-group-title">🛡️ Threat Detection</div>
+                <div class="metric-row"><span class="metric-label">Threat Level</span>      <span class="sec-badge" id="threat-level-badge">--</span></div>
+                <div class="metric-row"><span class="metric-label">Spoofed Sensors</span>   <span class="metric-value" id="spoofed-sensors">--</span></div>
+                <div class="metric-row"><span class="metric-label">Interceptions</span>      <span class="metric-value" id="intercept-events">--</span></div>
+                <div class="metric-row"><span class="metric-label">DoS Attempts</span>       <span class="metric-value" id="dos-attempts">--</span></div>
+                <div id="threat-log" class="threat-log"></div>
+            </div>
+
+            <!-- QKD -->
+            <div class="sec-group" style="border:none; margin-bottom:0;">
+                <div class="sec-group-title">⚛️ Quantum Key Distribution</div>
+                <div class="metric-row"><span class="metric-label">Channel Status</span>    <span class="sec-badge" id="qkd-status-badge">--</span></div>
+                <div class="metric-row"><span class="metric-label">Key Rate</span>          <span class="metric-value" id="qkd-key-rate">-- kbps</span></div>
+                <div class="metric-row"><span class="metric-label">QBER</span>              <span class="metric-value" id="qkd-qber">-- %</span></div>
+                <div class="metric-row"><span class="metric-label">Eavesdrop Detected</span><span class="metric-value" id="qkd-eavesdrop">--</span></div>
+                <div class="metric-row"><span class="metric-label">Secure Channels</span>   <span class="metric-value" id="qkd-channels">--</span></div>
+            </div>
+
+            <div class="footer-note">Updated: <span id="sec-last-update">--</span> · Simulated</div>
+
+        </div>
     </div>
 
-    <!-- Legend Panel -->
-    <div id="legend">
-        <h3>🚦 Traffic & Pavement</h3>
-        
-        <div class="legend-section">
-            <h4>Traffic Levels</h4>
-            <div class="legend-item">
-                <div class="color-box" style="background: #ff4444;"></div>
-                <span>Heavy - High congestion</span>
-            </div>
-            <div class="legend-item">
-                <div class="color-box" style="background: #ff8c00;"></div>
-                <span>Moderate - Some delays</span>
-            </div>
-            <div class="legend-item">
-                <div class="color-box" style="background: #ffd700;"></div>
-                <span>Light - Normal flow</span>
-            </div>
-            <div class="legend-item">
-                <div class="color-box" style="background: #32cd32;"></div>
-                <span>Minimal - Light traffic</span>
-            </div>
-        </div>
-
-        <div class="legend-section">
-            <h4>QRL Risk Levels</h4>
-            <div class="legend-item">
-                <span style="font-size: 20px; margin-right: 10px;">🟢</span>
-                <span>NORMAL - Excellent</span>
-            </div>
-            <div class="legend-item">
-                <span style="font-size: 20px; margin-right: 10px;">🟡</span>
-                <span>WATCH - Monitor</span>
-            </div>
-            <div class="legend-item">
-                <span style="font-size: 20px; margin-right: 10px;">🟠</span>
-                <span>CONGESTED - Action needed</span>
-            </div>
-            <div class="legend-item">
-                <span style="font-size: 20px; margin-right: 10px;">🔴</span>
-                <span>CRITICAL - Urgent repair</span>
-            </div>
-        </div>
-
-        <div class="legend-section" style="border-bottom: none;">
-            <div style="font-size: 11px; color: #666;">
-                Last update: <span id="last-update">--:--</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Google Maps View -->
+    <!-- Map (fullscreen behind sidebar) -->
     <div id="map"></div>
 
-    <!-- Google Street View (Overlay) -->
-    <div id="street-view"></div>
-
-    <!-- Pavement Condition Panel -->
-    <div id="condition-panel">
-        <h3>📊 Pavement Condition Analysis</h3>
-        
-        <div class="condition-info">
-            <div class="condition-label">Pavement Condition Index (PCI)</div>
-            <div class="pci-score">
-                <span class="pci-number condition-good" id="pci-value">--</span>
-                <span class="pci-max">/ 100</span>
-            </div>
-        </div>
-
-        <div class="condition-info">
-            <div class="condition-label">Condition Rating</div>
-            <div class="condition-value condition-good" id="condition-rating">Click "Analyze Pavement" to begin</div>
-        </div>
-
-        <div class="location-info">
-            <div><strong>Location:</strong></div>
-            <div id="location-coords">Click on the map to select a location</div>
-            <div id="location-address" style="margin-top: 5px; color: #aaa;"></div>
-        </div>
-
-        <div id="traffic-data" class="traffic-info" style="display: none;">
-            <h4>🚦 Traffic Data</h4>
-            <div class="traffic-metric">
-                <span class="label">Current Volume:</span>
-                <span class="value" id="traffic-volume">--</span>
-            </div>
-            <div class="traffic-metric">
-                <span class="label">Traffic Level:</span>
-                <span class="value" id="traffic-level">--</span>
-            </div>
-            <div class="traffic-metric">
-                <span class="label">Speed (mph):</span>
-                <span class="value" id="traffic-speed">--</span>
-            </div>
-        </div>
-
-        <div id="loading" class="loading-indicator" style="display: none; margin-top: 15px;">
-            <div class="spinner"></div>
-            <span>Analyzing with Quantum ML...</span>
-        </div>
-
-        <div id="analysis-details" style="display: none;"></div>
-    </div>
-
-    <!-- External JavaScript -->
-    <script src="js/integrated-traffic-viewer.js?v=2.2"></script>
-    
-    <!-- Google Maps JavaScript API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvEovX0VVfU_o__8MFnj3oVmL_ba0wbLA&callback=initMap&libraries=places&loading=async" async defer></script>
+<script src="js/integrated-traffic-viewer.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUn1Zuq3VcK_5tItlDFdD1dK7C_jQO9cA&callback=initMap&libraries=places&loading=async" async defer></script>
 </body>
 </html>

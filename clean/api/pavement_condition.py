@@ -73,7 +73,7 @@ class PavementConditionModel:
     """
     
     # Google Street View API configuration
-    STREET_VIEW_API_KEY = "AIzaSyAvEovX0VVfU_o__8MFnj3oVmL_ba0wbLA"
+    STREET_VIEW_API_KEY = "AIzaSyAUn1Zuq3VcK_5tItlDFdD1dK7C_jQO9cA"
     STREET_VIEW_API_URL = "https://maps.googleapis.com/maps/api/streetview"
     
     def __init__(self):

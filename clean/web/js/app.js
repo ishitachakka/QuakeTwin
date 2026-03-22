@@ -269,7 +269,7 @@ async function updatePavementCondition(location) {
     // Use relative URL for Vercel deployment, fallback to localhost
     const apiUrl =
       window.location.hostname === "localhost"
-        ? "http://localhost:8080/api/pavement-condition"
+        ? "http://localhost:8000/api/pavement-condition"
         : "/api/pavement-condition";
 
     const response = await fetch(apiUrl, {
