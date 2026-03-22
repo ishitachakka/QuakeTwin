@@ -71,7 +71,7 @@ function updateStreetViewThumbnail(location) {
     const lat = location.lat();
     const lng = location.lng();
     const key = 'AIzaSyAUn1Zuq3VcK_5tItlDFdD1dK7C_jQO9cA';
-    const url = `https://maps.googleapis.com/maps/api/streetview?size=268x150&location=${lat},${lng}&fov=90&pitch=0&key=${key}`;
+    const url = `https://maps.googleapis.com/maps/api/streetview?size=260x160&location=${lat},${lng}&key=${key}`;
     const img = document.getElementById('sv-thumbnail');
     img.src = url;
     img.onerror = () => { document.getElementById('sv-thumb-wrap').style.display = 'none'; };

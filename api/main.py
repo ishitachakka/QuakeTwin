@@ -60,6 +60,7 @@ try:
     adt_client = None  # Will be initialized in lifespan
 except ImportError as e:
     logger.warning(f"⚠️ ADT client not available: {e}")
+    ADTClient = None
     adt_client = None
 
 # Data models
@@ -411,6 +412,45 @@ async def get_available_segments():
     return {
         "segments": segments,
         "total": len(segments)
+    }
+
+# ========================================
+# Network Security (QKD) Endpoint
+# ========================================
+
+# Persistent simulated network state
+_net_state = {"attack_active": False, "_tick": 0}
+
+@app.get("/api/network-security")
+async def get_network_security():
+    """Simulated QKD channel status for the digital twin dashboard"""
+    _net_state["_tick"] += 1
+    tick = _net_state["_tick"]
+
+    # Every ~30 ticks (~30s) randomly toggle an attack for a few ticks
+    if tick % 30 == 0:
+        _net_state["attack_active"] = random.random() < 0.25
+    if tick % 30 == 8:
+        _net_state["attack_active"] = False
+
+    attack = _net_state["attack_active"]
+
+    if attack:
+        channel_status = "ATTACKED"
+        latency_ms = round(random.uniform(600, 1100), 1)
+        qber = round(random.uniform(0.18, 0.45), 4)
+    elif latency_ms_val := round(random.uniform(80, 320), 1):
+        qber = round(random.uniform(0.01, 0.09), 4)
+        channel_status = "DEGRADED" if latency_ms_val > 250 else "SECURE"
+        latency_ms = latency_ms_val
+
+    return {
+        "channel_status": channel_status,
+        "latency_ms": latency_ms,
+        "qber": qber,
+        "qkd_active": True,
+        "bb84_key_rate_bps": round(random.uniform(800, 4800)) if channel_status != "ATTACKED" else 0,
+        "timestamp": datetime.datetime.now().isoformat()
     }
 
 # ========================================
