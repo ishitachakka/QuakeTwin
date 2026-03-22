@@ -7,7 +7,7 @@ let activeTab = 'pavement';
 const FGCU_CENTER = { lat: 26.4622, lng: -81.7758 };
 const API_BASE    = window.location.hostname === 'localhost'
     ? 'http://localhost:8000'
-    : window.location.origin;
+    : 'https://quaketwin-production.up.railway.app';
 const USE_SIMULATED_QRL = false;
 
 // ─── Map Init ────────────────────────────────────────────────────────────────
