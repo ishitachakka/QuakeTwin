@@ -144,7 +144,7 @@ async function analyzePavement() {
         const timeoutId  = setTimeout(() => controller.abort(), 10000);
 
         const t0 = performance.now();
-        const pavementUrl = API_BASE + '/api/pavement-condition';
+        const pavementUrl = API_BASE + '/api/pavement-condition-direct';
         const response = await fetch(pavementUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
