@@ -14,7 +14,13 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
+
+# Ensure the api/ directory is on sys.path so sibling modules resolve
+# whether uvicorn is invoked as `api.main:app` (Railway/clean/) or
+# `main:app` (local dev from clean/api/).
+sys.path.insert(0, os.path.dirname(__file__))
 
 # Configure logging
 logging.basicConfig(
