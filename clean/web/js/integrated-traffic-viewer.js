@@ -160,7 +160,7 @@ async function analyzePavement() {
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        if (!data?.pci || !data?.condition) throw new Error('Invalid response');
+        if (!data?.pci) throw new Error('Invalid response');
 
         displayPavementCondition(data, false);
         await fetchTrafficData(selectedLocation);
