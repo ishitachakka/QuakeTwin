@@ -350,9 +350,6 @@ class PavementConditionModel:
             prediction['details']['analysis_method'] = 'Real Computer Vision + QRL Enhancement'
             prediction['details']['data_source'] = '100% Real Street View Image Analysis'
             
-            # Store analysis for continuous learning
-            self._learn_from_analysis(pci_from_image, image_analysis, latitude, longitude)
-            
             logger.info(f"📊 Final PCI: {prediction['pci']:.1f} from real image + QRL classification")
             logger.info(f"🧠 Model learning: {self.analysis_count} analyses completed")
             
@@ -713,41 +710,6 @@ async def analyze_pavement_condition(request: PavementConditionRequest):
         logger.error(f"Error analyzing pavement condition: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to analyze pavement condition: {str(e)}")
 
-    def _learn_from_analysis(self, pci: float, image_analysis: dict, latitude: float, longitude: float):
-        """
-        Continuous learning: Store analysis results to improve future predictions
-        
-        Args:
-            pci: Calculated PCI score
-            image_analysis: Full image analysis results
-            latitude: Location latitude
-            longitude: Location longitude
-        """
-        self.analysis_count += 1
-        
-        # Store analysis in learning history (keep last 1000 for memory efficiency)
-        analysis_record = {
-            'timestamp': datetime.datetime.now().isoformat(),
-            'pci': pci,
-            'location': {'lat': latitude, 'lng': longitude},
-            'features': {
-                'crack_score': image_analysis.get('crack_score', 0),
-                'smoothness_score': image_analysis.get('smoothness_score', 0),
-                'uniformity_score': image_analysis.get('uniformity_score', 0),
-                'condition_score': image_analysis.get('condition_score', 0),
-                'brightness': image_analysis.get('avg_brightness', 0)
-            }
-        }
-        
-        self.learning_history.append(analysis_record)
-        if len(self.learning_history) > 1000:
-            self.learning_history.pop(0)
-        
-        # Every 10 analyses, update QRL agent with new patterns
-        if self.qrl_agent and self.analysis_count % 10 == 0:
-            logger.info(f"🧠 Continuous Learning Update: {self.analysis_count} analyses completed, updating QRL patterns...")
-        
-        logger.debug(f"📊 Learning: Stored analysis #{self.analysis_count}, history size: {len(self.learning_history)}")
 
 @pavement_router.get("/pavement-model-status")
 async def get_model_status():
