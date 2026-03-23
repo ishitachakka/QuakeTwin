@@ -280,13 +280,6 @@ This project is being developed toward submission to:
 
 ---
 
-## 👥 Team
-
-* Ishita Chakkalakkal
-* Gabriella Vallar
-
----
-
 ## 📄 License
 
 MIT License
