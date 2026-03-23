@@ -164,7 +164,7 @@ async function analyzePavement() {
         if (!data?.pci) throw new Error('Invalid response');
 
         displayPavementCondition(data, false);
-        await fetchTrafficData(selectedLocation);
+
         updateStatus('✅ QRL analysis complete');
 
     } catch (err) {
@@ -177,12 +177,6 @@ async function analyzePavement() {
     }
 }
 
-async function fetchTrafficData() {
-    try {
-        const response = await fetch(`${API_BASE}/api/qrl/road_segment_1`);
-        if (response.ok) displayTrafficData(await response.json());
-    } catch { /* optional */ }
-}
 
 function displayTrafficData(data) {
     showElement('traffic-data');
