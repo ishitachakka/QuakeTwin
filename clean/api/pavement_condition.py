@@ -533,8 +533,10 @@ class PavementConditionModel:
                 }
                 recommended_action = action_map.get(risk_label, 'Assess condition')
                 
+                condition = "Excellent" if pci >= 85 else "Good" if pci >= 70 else "Fair" if pci >= 55 else "Poor" if pci >= 40 else "Critical"
                 return {
                     "pci": round(pci, 2),
+                    "condition": condition,
                     "confidence": round(confidence, 3),
                     "details": {
                         "distress_types": distress_types,
@@ -562,8 +564,10 @@ class PavementConditionModel:
         if pci < 50:
             distress_types.append("Potholes")
         
+        condition = "Excellent" if pci >= 85 else "Good" if pci >= 70 else "Fair" if pci >= 55 else "Poor" if pci >= 40 else "Critical"
         return {
             "pci": round(pci, 2),
+            "condition": condition,
             "confidence": round(confidence, 3),
             "details": {
                 "distress_types": distress_types if distress_types else ["Minor Wear"],
