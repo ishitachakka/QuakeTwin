@@ -5,6 +5,10 @@ Receives Street View location data and returns pavement condition predictions
 Uses Quantum Reinforcement Learning for intelligent condition assessment
 """
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -73,7 +77,7 @@ class PavementConditionModel:
     """
     
     # Google Street View API configuration
-    STREET_VIEW_API_KEY = "AIzaSyAUn1Zuq3VcK_5tItlDFdD1dK7C_jQO9cA"
+    STREET_VIEW_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
     STREET_VIEW_API_URL = "https://maps.googleapis.com/maps/api/streetview"
     
     def __init__(self):
