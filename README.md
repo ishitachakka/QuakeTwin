@@ -1,5 +1,7 @@
 # QuakeTwin
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12522/badge)](https://www.bestpractices.dev/projects/12522)
+
 **QKD-Secured V2X Communication for Post-Disaster Transportation Digital Twins**
 
 Live platform: https://quake-twin.vercel.app  
