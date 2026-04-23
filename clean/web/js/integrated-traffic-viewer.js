@@ -70,7 +70,7 @@ function selectLocation(location) {
 function updateStreetViewThumbnail(location) {
     const lat = location.lat();
     const lng = location.lng();
-    const key = 'AIzaSyAUn1Zuq3VcK_5tItlDFdD1dK7C_jQO9cA';
+    const key = GOOGLE_MAPS_API_KEY;
     const url = `https://maps.googleapis.com/maps/api/streetview?size=260x160&location=${lat},${lng}&key=${key}`;
     const img = document.getElementById('sv-thumbnail');
     img.src = url;
