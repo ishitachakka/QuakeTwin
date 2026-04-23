@@ -126,6 +126,25 @@ The 101-router star topology approximates hub-and-spoke disaster response coordi
 
 ---
 
+## Security
+
+QuakeTwin has undergone STRIDE-based threat modeling 
+covering five trust zones from untrusted edge sensors 
+to QRL model inputs. Key findings:
+
+- Critical API endpoints identified for authentication 
+  hardening (JWT + API keys on all POST routes)
+- BB84 QKD existing as primary MITM mitigation 
+  (QBER threshold 11%)
+- Fusion consensus (2-of-3 source agreement) proposed 
+  for Sybil attack resilience
+- Immutable audit log proposed for replay attack detection
+
+See `/security/threat_model.png` for the full 
+STRIDE diagram.
+
+---
+
 ## Tech Stack
 
 | Component | Technology |
