@@ -6,7 +6,9 @@ Provides real-time traffic data and AI forecasting endpoints
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+import pathlib
 import asyncio
 import random
 import datetime
@@ -136,6 +138,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+WEB_DIR = pathlib.Path(__file__).parent.parent / "web"
+
+app.mount("/css", StaticFiles(directory=WEB_DIR / "css"), name="css")
+app.mount("/js", StaticFiles(directory=WEB_DIR / "js"), name="js")
+
+@app.get("/index.html", response_class=HTMLResponse)
+async def serve_index():
+    html = (WEB_DIR / "index.html").read_text()
+    key = os.getenv("GOOGLE_MAPS_API_KEY", "")
+    html = html.replace("%%GOOGLE_MAPS_API_KEY%%", key)
+    return HTMLResponse(content=html)
 
 # Include routers
 if cesium_router:
