@@ -6,7 +6,7 @@ let trafficLayerActive = false;
 let activeTab = 'pavement';
 
 const FGCU_CENTER = { lat: 26.4622, lng: -81.7758 };
-const RAILWAY_BASE = 'https://quaketwin-production.up.railway.app';
+const RAILWAY_BASE = 'https://quaketwin.onrender.com';
 const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : RAILWAY_BASE;
 const USE_SIMULATED_QRL = false;
 
