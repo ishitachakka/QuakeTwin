@@ -5,7 +5,7 @@
 **QKD-Secured V2X Communication for Post-Disaster Transportation Digital Twins**
 
 Live platform: https://quake-twin.vercel.app  
-Backend API: https://quaketwin-production.up.railway.app
+Backend API: https://quaketwin.onrender.com
 
 ---
 
