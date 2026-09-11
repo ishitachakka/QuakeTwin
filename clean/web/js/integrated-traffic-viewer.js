@@ -132,6 +132,9 @@ async function analyzePavement() {
     document.getElementById('condition-rating').textContent = '--';
     updateStatus('⚛️ Running QRL analysis…');
 
+    let timeoutId = null;
+    let wakeupNoticeId = null;
+
     try {
         if (USE_SIMULATED_QRL) {
             const mock = getSimulatedQRLData(selectedLocation);
@@ -141,7 +144,13 @@ async function analyzePavement() {
         }
 
         const controller = new AbortController();
-        const timeoutId  = setTimeout(() => controller.abort(), 10000);
+        // Render's free tier spins the backend down after idle and can take
+        // 30-60s to cold-start on the next request, so give it real headroom
+        // rather than the old 10s timeout.
+        timeoutId = setTimeout(() => controller.abort(), 45000);
+        wakeupNoticeId = setTimeout(() => {
+            updateStatus('⏳ Waking up backend (cold start can take up to a minute)…');
+        }, 6000);
 
         const t0 = performance.now();
         const pavementUrl = API_BASE + '/api/pavement-condition-direct';
@@ -156,6 +165,7 @@ async function analyzePavement() {
         });
         const responseTimeMs = performance.now() - t0;
         clearTimeout(timeoutId);
+        clearTimeout(wakeupNoticeId);
         applyMeasuredNetworkConditions(responseTimeMs);
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -170,9 +180,14 @@ async function analyzePavement() {
     } catch (err) {
         console.error('Analysis error:', err);
         hideElement('loading');
-        showToast('QRL analysis unavailable – API connection failed.');
+        const message = err?.name === 'AbortError'
+            ? 'QRL analysis timed out – backend may still be starting up. Please try again.'
+            : 'QRL analysis unavailable – API connection failed.';
+        showToast(message);
         updateStatus('❌ Analysis unavailable');
     } finally {
+        clearTimeout(timeoutId);
+        clearTimeout(wakeupNoticeId);
         hideElement('loading');
     }
 }
