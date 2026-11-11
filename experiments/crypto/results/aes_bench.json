@@ -1,0 +1,33 @@
+{
+  "platform": "Linux-6.8.0-138-generic-aarch64-with-glibc2.35",
+  "machine": "aarch64",
+  "cpus": 4,
+  "n_messages": 20000,
+  "results": [
+    {
+      "message_bytes": 256,
+      "enc_dec_mean_us": 6.0,
+      "enc_dec_p99_us": 13.58,
+      "throughput_MBps": 42.7,
+      "key_bits_per_msg_aes": 5.12,
+      "key_bits_per_msg_otp": 2048
+    },
+    {
+      "message_bytes": 1024,
+      "enc_dec_mean_us": 6.52,
+      "enc_dec_p99_us": 12.58,
+      "throughput_MBps": 156.9,
+      "key_bits_per_msg_aes": 5.12,
+      "key_bits_per_msg_otp": 8192
+    },
+    {
+      "message_bytes": 4096,
+      "enc_dec_mean_us": 8.3,
+      "enc_dec_p99_us": 18.54,
+      "throughput_MBps": 493.5,
+      "key_bits_per_msg_aes": 5.12,
+      "key_bits_per_msg_otp": 32768
+    }
+  ],
+  "mlkem768_encap_decap_mean_us": 41.14
+}

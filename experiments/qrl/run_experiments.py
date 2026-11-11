@@ -66,6 +66,25 @@ def make_actor(kind, obs_dim, n_qubits=2, n_layers=2):
     raise ValueError(kind)
 
 
+def run_scale(kind, seed, episodes, eval_seeds):
+    """Train at 15 segments (random damage), evaluate at 15/100/200 segments
+    under random and spatially concentrated damage. The policy is shared
+    per segment, so its input size does not change with network size."""
+    aware, secure = COMM_SETTINGS["comm_aware_secure"]
+    obs_dim = 5
+    actor = make_actor(kind, obs_dim)
+    t0 = time.time()
+    train_ppo(actor, obs_dim, dict(n_segments=15, comm_aware=aware), sampler(secure), seed=seed, episodes=episodes)
+    train_s = time.time() - t0
+    ev = {}
+    for n in [15, 100, 200]:
+        for dmg in ["random", "concentrated"]:
+            kw = dict(n_segments=n, comm_aware=aware, damage=dmg)
+            ev[f"{n}_{dmg}"] = {k: evaluate(actor, kw, dict(STRESS[k], secure=secure), eval_seeds)
+                                for k in ["baseline", "medium", "disaster"]}
+    return dict(kind=kind, seed=seed, params=actor.param_report(), train_seconds=train_s, eval=ev)
+
+
 def run_one(kind, setting, seed, episodes, eval_seeds, n_qubits=2, n_layers=2, full_eval=True):
     aware, secure = COMM_SETTINGS[setting]
     env_kw = dict(n_segments=15, comm_aware=aware)
@@ -122,5 +141,21 @@ def main(mode):
                     save("qubits", runs, meta)
 
 
+def scale_main():
+    seeds, episodes, eval_seeds = list(range(5)), 1000, list(range(10))
+    runs = []
+    meta = dict(seeds=seeds, episodes=episodes, eval_seeds=eval_seeds, train_segments=15,
+                eval_segments=[15, 100, 200], damage=["random", "concentrated"])
+    for kind in ["QRL", "PPO-small", "PPO"]:
+        for s in seeds:
+            r = run_scale(kind, s, episodes, eval_seeds)
+            runs.append(r)
+            print(f"scale {kind:9s} seed={s} 200_conc medium acc="
+                  f"{r['eval']['200_concentrated']['medium']['accuracy']:.3f} ({r['train_seconds']:.0f}s)", flush=True)
+            save("scale", runs, meta)
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "scale":
+        scale_main(); sys.exit(0)
     main(sys.argv[1] if len(sys.argv) > 1 else "smoke")

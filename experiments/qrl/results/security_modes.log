@@ -1,0 +1,30 @@
+none QRL 0 {'medium_1.0': 0.585}
+none QRL 1 {'medium_1.0': 0.725}
+none QRL 2 {'medium_1.0': 0.663}
+none QRL 3 {'medium_1.0': 0.756}
+none QRL 4 {'medium_1.0': 0.751}
+none PPO 0 {'medium_1.0': 0.588}
+none PPO 1 {'medium_1.0': 0.594}
+none PPO 2 {'medium_1.0': 0.593}
+none PPO 3 {'medium_1.0': 0.591}
+none PPO 4 {'medium_1.0': 0.593}
+pqc_or_hybrid QRL 0 {'medium_1.0': 0.733}
+pqc_or_hybrid QRL 1 {'medium_1.0': 0.727}
+pqc_or_hybrid QRL 2 {'medium_1.0': 0.749}
+pqc_or_hybrid QRL 3 {'medium_1.0': 0.765}
+pqc_or_hybrid QRL 4 {'medium_1.0': 0.754}
+pqc_or_hybrid PPO 0 {'medium_1.0': 0.771}
+pqc_or_hybrid PPO 1 {'medium_1.0': 0.739}
+pqc_or_hybrid PPO 2 {'medium_1.0': 0.76}
+pqc_or_hybrid PPO 3 {'medium_1.0': 0.78}
+pqc_or_hybrid PPO 4 {'medium_1.0': 0.771}
+qkd_only QRL 0 {'medium_1.0': 0.74, 'medium_0.8': 0.731, 'medium_0.6': 0.704, 'medium_0.4': 0.686, 'medium_0.2': 0.679}
+qkd_only QRL 1 {'medium_1.0': 0.767, 'medium_0.8': 0.746, 'medium_0.6': 0.723, 'medium_0.4': 0.709, 'medium_0.2': 0.689}
+qkd_only QRL 2 {'medium_1.0': 0.75, 'medium_0.8': 0.728, 'medium_0.6': 0.711, 'medium_0.4': 0.695, 'medium_0.2': 0.667}
+qkd_only QRL 3 {'medium_1.0': 0.76, 'medium_0.8': 0.74, 'medium_0.6': 0.719, 'medium_0.4': 0.7, 'medium_0.2': 0.673}
+qkd_only QRL 4 {'medium_1.0': 0.76, 'medium_0.8': 0.744, 'medium_0.6': 0.724, 'medium_0.4': 0.706, 'medium_0.2': 0.684}
+qkd_only PPO 0 {'medium_1.0': 0.77, 'medium_0.8': 0.749, 'medium_0.6': 0.733, 'medium_0.4': 0.721, 'medium_0.2': 0.7}
+qkd_only PPO 1 {'medium_1.0': 0.772, 'medium_0.8': 0.749, 'medium_0.6': 0.729, 'medium_0.4': 0.716, 'medium_0.2': 0.696}
+qkd_only PPO 2 {'medium_1.0': 0.769, 'medium_0.8': 0.747, 'medium_0.6': 0.728, 'medium_0.4': 0.715, 'medium_0.2': 0.687}
+qkd_only PPO 3 {'medium_1.0': 0.79, 'medium_0.8': 0.756, 'medium_0.6': 0.728, 'medium_0.4': 0.731, 'medium_0.2': 0.694}
+qkd_only PPO 4 {'medium_1.0': 0.794, 'medium_0.8': 0.768, 'medium_0.6': 0.738, 'medium_0.4': 0.739, 'medium_0.2': 0.713}

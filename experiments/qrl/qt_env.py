@@ -32,8 +32,12 @@ class Channel:
     """Sensor -> Communication DT -> Computational DT delivery model."""
 
     def __init__(self, rng, packet_loss=0.0, latency_ms=0.0, attack_rate=0.0,
-                 secure=False, base_qber=0.02, step_ms=250.0):
+                 secure=False, base_qber=0.02, step_ms=250.0, qkd_avail=1.0):
         self.rng = rng
+        # qkd_avail < 1 models QKD-only operation: with probability 1 - qkd_avail
+        # the feeder hop has no QKD key for a message, so it cannot be sent securely.
+        # The default (1.0) draws no random number, so earlier results are unchanged.
+        self.qkd_avail = qkd_avail
         self.packet_loss = packet_loss
         self.lag = int(latency_ms // step_ms)          # steps of delay
         self.attack_rate = attack_rate
@@ -51,6 +55,9 @@ class Channel:
         if self.rng.random() < self.packet_loss:
             self.stats["dropped"] += 1
             return None, False, None
+        if self.secure and self.qkd_avail < 1.0 and self.rng.random() > self.qkd_avail:
+            self.stats["dropped"] += 1
+            return None, False, None   # no key material: message held back
         value = history[-1 - min(self.lag, len(history) - 1)]
         if self.rng.random() < self.attack_rate:
             self.stats["attacked"] += 1
