@@ -1,0 +1,48 @@
+{
+  "platform": "Linux-7.0.14-x86_64-with-glibc2.40",
+  "machine": "x86_64",
+  "cpus": 8,
+  "n_runs": 3000,
+  "kex": {
+    "x25519": {
+      "type": "Classical",
+      "mean_us": 72.6,
+      "p99_us": 179.9,
+      "bytes_sent": 64
+    },
+    "mlkem768": {
+      "type": "PQC",
+      "mean_us": 44.9,
+      "p99_us": 84.2,
+      "bytes_sent": 2272
+    },
+    "hybrid_x25519_mlkem768": {
+      "type": "Hybrid",
+      "note": "mean_us/p99_us are each the sum of the x25519 and mlkem768 rows' own mean/p99 (plus negligible HKDF), not an end-to-end timing",
+      "mean_us": 120.1,
+      "p99_us": 266.7,
+      "bytes_sent": 2336
+    }
+  },
+  "auth": {
+    "ed25519": {
+      "type": "Classical",
+      "mean_us": 110.8,
+      "p99_us": 138.4,
+      "bytes_sent": 96
+    },
+    "mldsa65": {
+      "type": "PQC",
+      "mean_us": 1231.6,
+      "p99_us": 4429.3,
+      "bytes_sent": 5261
+    },
+    "mac_qkd_derived": {
+      "type": "Symmetric",
+      "note": "HMAC-SHA256 stand-in for a MAC keyed with QKD key material",
+      "mean_us": 3.2,
+      "p99_us": 5.4,
+      "bytes_sent": 32
+    }
+  }
+}

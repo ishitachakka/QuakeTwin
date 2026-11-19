@@ -32,8 +32,17 @@ class Channel:
     """Sensor -> Communication DT -> Computational DT delivery model."""
 
     def __init__(self, rng, packet_loss=0.0, latency_ms=0.0, attack_rate=0.0,
-                 secure=False, base_qber=0.02, step_ms=250.0, qkd_avail=1.0):
+                 secure=False, base_qber=0.02, step_ms=250.0, qkd_avail=1.0,
+                 refresh_ms=None, first_refresh_ms=None, refresh_every=50):
         self.rng = rng
+        # refresh_ms: time the hop is busy for one hybrid key refresh (key exchange plus
+        # authentication, compute and transmission). While busy, messages queue behind it,
+        # so delivery lag is raised for every step until busy_ms is used up, not only the
+        # step the refresh starts in -- a refresh can take several step_ms at a slow link
+        # rate. first_refresh_ms covers round 1 when it differs (ML-DSA in round 1,
+        # QKD-keyed MAC afterwards). None (default) keeps earlier results unchanged.
+        self.refresh_ms, self.first_refresh_ms, self.refresh_every = refresh_ms, first_refresh_ms, refresh_every
+        self.latency_ms, self.step_ms, self.busy_ms, self.refreshes = latency_ms, step_ms, 0.0, 0
         # qkd_avail < 1 models QKD-only operation: with probability 1 - qkd_avail
         # the feeder hop has no QKD key for a message, so it cannot be sent securely.
         # The default (1.0) draws no random number, so earlier results are unchanged.
@@ -45,20 +54,53 @@ class Channel:
         self.base_qber = base_qber
         self.stats = dict(sent=0, dropped=0, attacked=0, detected=0, tampered_in=0)
 
-    def deliver(self, true_c, history):
-        """Return (reported_condition, fresh, verified) for one segment.
+    def reset(self):
+        """Clear per-episode state (refresh cadence, busy time, counters) so a new
+        episode doesn't inherit a mid-refresh hop or stale stats from the last one."""
+        self.busy_ms, self.refreshes = 0.0, 0
+        self.lag = int(self.latency_ms // self.step_ms)
+        self.stats = dict(sent=0, dropped=0, attacked=0, detected=0, tampered_in=0)
 
-        `history` holds this segment's true conditions for the last steps,
-        so latency can return a delayed value.
+    def new_step(self):
+        """Called once per environment step, before any deliver() calls. Consumes
+        one step_ms of any outstanding refresh busy time and recomputes lag from
+        what remains, so a refresh that takes several steps keeps the hop delayed
+        across all of them, not just the step it started in. self.lag is set ONLY
+        here, so every segment in a step sees the same lag regardless of delivery
+        order; a refresh triggered mid-step (in deliver()) adds to busy_ms for the
+        *next* step's new_step() to pick up, rather than changing lag retroactively
+        for segments already delivered or still to come in the step it fires in."""
+        if self.busy_ms > 0:
+            self.busy_ms = max(0.0, self.busy_ms - self.step_ms)
+        self.lag = int((self.latency_ms + self.busy_ms) // self.step_ms)
+
+    def deliver(self, true_c, history):
+        """Return (reported_condition, fresh, verified, exposed_lag) for one segment.
+
+        `history` holds this segment's true conditions for the last steps, so
+        latency can return a delayed value. The value lookup is always clamped to
+        available history; exposed_lag is what the caller should report as the
+        "age" of that value. When no refresh_ms is configured (the default),
+        exposed_lag is the raw, unclamped self.lag, exactly as before this
+        feature existed, so runs with refresh_ms=None are bit-for-bit unchanged.
+        When refresh_ms is set, exposed_lag is clamped the same way the value
+        lookup is, since lag can then run well past the available history and an
+        unclamped age would overstate how stale the returned value really is.
         """
         self.stats["sent"] += 1
+        if self.refresh_ms is not None and (self.stats["sent"] - 1) % self.refresh_every == 0:
+            first = self.refreshes == 0 and self.first_refresh_ms is not None
+            self.busy_ms += self.first_refresh_ms if first else self.refresh_ms
+            self.refreshes += 1
         if self.rng.random() < self.packet_loss:
             self.stats["dropped"] += 1
-            return None, False, None
+            return None, False, None, self.lag
         if self.secure and self.qkd_avail < 1.0 and self.rng.random() > self.qkd_avail:
             self.stats["dropped"] += 1
-            return None, False, None   # no key material: message held back
-        value = history[-1 - min(self.lag, len(history) - 1)]
+            return None, False, None, self.lag   # no key material: message held back
+        value_lag = min(self.lag, len(history) - 1)
+        value = history[-1 - value_lag]
+        exposed_lag = value_lag if self.refresh_ms is not None else self.lag
         if self.rng.random() < self.attack_rate:
             self.stats["attacked"] += 1
             if self.secure:
@@ -66,15 +108,15 @@ class Channel:
                 errors = self.rng.binomial(TEST_BITS, qber_true)
                 if errors / TEST_BITS > QBER_THRESHOLD:
                     self.stats["detected"] += 1
-                    return None, False, "detected"  # discarded, keep last verified
+                    return None, False, "detected", exposed_lag  # discarded, keep last verified
             # attacker reports a damaged road as fine and vice versa
             self.stats["tampered_in"] += 1
             tampered = float(np.clip(1.0 - value + self.rng.normal(0, 0.05), 0, 1))
             # the DT cannot tell an undetected attack from a clean report
-            return tampered, self.lag == 0, self.secure
+            return tampered, exposed_lag == 0, self.secure, exposed_lag
         # `verified` only means "passed the security check"; without the
         # security layer nothing can be verified
-        return float(value), self.lag == 0, self.secure
+        return float(value), exposed_lag == 0, self.secure, exposed_lag
 
 
 class RecoveryEnv:
@@ -114,6 +156,7 @@ class RecoveryEnv:
 
     def reset(self):
         self._init_damage()
+        self.channel.reset()
         self.t = 0
         self.hist = [[x] for x in self.c]
         self.c_obs = self.c.copy()          # DT starts synchronized
@@ -123,15 +166,16 @@ class RecoveryEnv:
         return self._observe()
 
     def _sync(self):
+        self.channel.new_step()
         for i in range(self.n):
-            v, fresh, ver = self.channel.deliver(self.c[i], self.hist[i])
+            v, fresh, ver, used_lag = self.channel.deliver(self.c[i], self.hist[i])
             if v is None:
                 self.age[i] += 1
                 if ver == "detected":
                     self.verified[i] = 0.0      # DT knows this report was rejected
                 continue
             self.c_obs[i] = v
-            self.age[i] = 0 if fresh else self.channel.lag
+            self.age[i] = 0 if fresh else used_lag
             self.verified[i] = 1.0 if ver else 0.0   # always 0 without security
 
     def _observe(self):
@@ -172,7 +216,7 @@ class RecoveryEnv:
         self.h = np.clip(self.h * 0.97 + 0.5 * shock, 0, 1)
         for j in range(self.n):
             self.hist[j].append(self.c[j])
-            if len(self.hist[j]) > 8:
+            if len(self.hist[j]) > self.T + 1:  # never clamp within one episode's own length
                 self.hist[j].pop(0)
 
         self.t += 1

@@ -104,8 +104,71 @@ def qubits():
     (R / "qubits_summary.md").write_text("\n".join(lines))
 
 
+def sweep(mode):
+    d = json.loads((R / f"{mode}.json").read_text())
+    runs, name = d["runs"], d["meta"]["param"]
+    lines = [f"# {name} sweep (comm_aware_secure, 15 segments), mean ± 95% CI over {len(d['meta']['seeds'])} seeds\n",
+             "Accuracy in %; health and cost are end-of-episode values at medium stress.\n",
+             f"| {name} | agent | baseline acc | medium acc | disaster acc | medium health | medium cost | train s |",
+             "|---|---|---|---|---|---|---|---|"]
+    for v in d["meta"]["values"]:
+        for k in ["QRL", "PPO"]:
+            sel = [r for r in runs if r["value"] == v and r["kind"] == k]
+            if not sel:
+                continue
+            cells = [fmt(*ci([r["eval"][sc]["accuracy"] for r in sel])) for sc in ["baseline", "medium", "disaster"]]
+            cells.append(fmt(*ci([r["eval"]["medium"]["health"] for r in sel]), pct=False))
+            cells.append(fmt(*ci([r["eval"]["medium"]["cost"] for r in sel]), pct=False))
+            lines.append(f"| {v:g} | {k} | " + " | ".join(cells) + f" | {np.mean([r['train_seconds'] for r in sel]):.0f} |")
+    (R / f"{mode}_summary.md").write_text("\n".join(lines))
+
+
+def security_modes():
+    d = json.loads((R / "security_modes.json").read_text())
+    runs, avail = d["runs"], d["avail"]
+    lines = ["# Security modes (R1 5.1/5.2): decision accuracy %, mean ± 95% CI over seeds\n",
+             "QKD-only: a = probability the feeder hop has QKD key for a message. PQC-only and hybrid are identical in this decision model.\n",
+             "| mode | agent | stress | " + " | ".join(f"a={a:g}" for a in avail) + " |",
+             "|---|---|---|" + "---|" * len(avail)]
+    for mode in ["none", "pqc_or_hybrid", "qkd_only"]:
+        for k in ["QRL", "PPO"]:
+            sel = [r for r in runs if r["mode"] == mode and r["kind"] == k]
+            if not sel:
+                continue
+            for sc in ["baseline", "medium", "disaster"]:
+                cells = []
+                for a in avail:
+                    key = f"{sc}_{a}"
+                    cells.append(fmt(*ci([r["eval"][key]["accuracy"] for r in sel])) if key in sel[0]["eval"] else "-")
+                lines.append(f"| {mode} | {k} | {sc} | " + " | ".join(cells) + " |")
+    (R / "security_modes_summary.md").write_text("\n".join(lines))
+
+
+def security_hybrid():
+    d = json.loads((R / "security_modes_hybrid.json").read_text())
+    runs, rates = d["runs"], d["link_kbps"]
+    lines = ["# Hybrid QKD + ML-KEM with authentication cost (R1 comment 4.3): accuracy %, mean ± 95% CI over seeds\n",
+             "Each key refresh (every 50 messages) holds up the hop for key exchange + authentication time at "
+             "the given link rate; a refresh that outlasts one step keeps delaying delivery until it finishes.\n",
+             "Caveat: at 20 kbps the refresh rarely finishes before the next one is due (ML-DSA every refresh "
+             "especially), so the backlog does not drain within an episode and the hop stays effectively "
+             "always-busy -- treat the 20 kbps column as 'severely degraded', not a precise point on a curve. "
+             "At disaster stress, the packet-loss/attack-rate floor already dominates over refresh-induced lag, "
+             "so the 1000/100/20 kbps columns can come out nearly identical there; this is expected, not a bug, "
+             "and is a weaker test of the link-rate effect than the baseline/medium rows.\n",
+             "| mode | agent | stress | " + " | ".join(f"{k} kbps" for k in rates) + " |",
+             "|---|---|---|" + "---|" * len(rates)]
+    for mode in sorted({r["mode"] for r in runs}):
+        for k in ["QRL", "PPO"]:
+            sel = [r for r in runs if r["mode"] == mode and r["kind"] == k]
+            for sc in ["baseline", "medium", "disaster"]:
+                cells = [fmt(*ci([r["eval"][f"{sc}_{v}"]["accuracy"] for r in sel])) for v in rates]
+                lines.append(f"| {mode} | {k} | {sc} | " + " | ".join(cells) + " |")
+    (R / "security_modes_hybrid_summary.md").write_text("\n".join(lines))
+
+
 if __name__ == "__main__":
-    for f in (ablation, qubits):
+    for f in (ablation, qubits, security_modes, security_hybrid, lambda: sweep("lam_sweep"), lambda: sweep("lr_sweep")):
         try:
             f(); print("ok", f.__name__)
         except FileNotFoundError:

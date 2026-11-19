@@ -155,7 +155,45 @@ def scale_main():
             save("scale", runs, meta)
 
 
+SWEEPS = {  # mode: (parameter name, values); everything else stays at the paper defaults
+    "lam_sweep": ("lam", [0.1, 0.5, 1.0, 2.0]),
+    "lr_sweep": ("lr", [1e-3, 5e-3, 1e-2]),
+}
+
+
+def sweep_main(mode):
+    """R1 7.2: sensitivity to the reward weight lambda (Eq. reward) and the PPO learning rate,
+    full Communication DT. Accuracy is scored against the true condition, so it does not depend
+    on lambda directly; health and cost show the trade-off lambda controls."""
+    name, values = SWEEPS[mode]
+    seeds, episodes, eval_seeds = list(range(5)), 1000, list(range(20))
+    aware, secure = COMM_SETTINGS["comm_aware_secure"]
+    runs = []
+    meta = dict(param=name, values=values, seeds=seeds, episodes=episodes, eval_seeds=eval_seeds,
+                setting="comm_aware_secure", n_segments=15)
+    for v in values:
+        lam = v if name == "lam" else 0.5
+        lr = v if name == "lr" else 5e-3
+        env_kw = dict(n_segments=15, comm_aware=aware, lam=lam)
+        for kind in ["QRL", "PPO"]:
+            for s in seeds:
+                actor = make_actor(kind, 5)
+                t0 = time.time()
+                curve = train_ppo(actor, 5, env_kw, sampler(secure), seed=s, episodes=episodes,
+                                  lr_actor=lr, lr_critic=lr)
+                train_s = time.time() - t0
+                ev = {k: evaluate(actor, env_kw, dict(STRESS[k], secure=secure), eval_seeds)
+                      for k in ["baseline", "medium", "disaster"]}
+                runs.append(dict(kind=kind, seed=s, param=name, value=v, train_seconds=train_s,
+                                 curve=curve, eval=ev))
+                print(f"{mode} {name}={v:g} {kind:4s} seed={s} medium acc={ev['medium']['accuracy']:.3f} "
+                      f"({train_s:.0f}s)", flush=True)
+                save(mode, runs, meta)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "scale":
         scale_main(); sys.exit(0)
+    if len(sys.argv) > 1 and sys.argv[1] in SWEEPS:
+        sweep_main(sys.argv[1]); sys.exit(0)
     main(sys.argv[1] if len(sys.argv) > 1 else "smoke")
