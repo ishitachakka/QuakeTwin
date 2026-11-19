@@ -1,0 +1,61 @@
+{
+ "machine": "Linux aarch64, 4 CPU, Python 3.10.12",
+ "library": "pyca/cryptography 50.0.2",
+ "n": 3000,
+ "key_exchange": {
+  "x25519": {
+   "mean_us": 169.11356733333335,
+   "p99_us": 541.0
+  },
+  "mlkem768": {
+   "mean_us": 133.50629433333333,
+   "p99_us": 183.0
+  },
+  "hybrid_x25519_mlkem768": {
+   "mean_us": 305.545971,
+   "p99_us": 484.375
+  }
+ },
+ "authentication": {
+  "ed25519": {
+   "mean_us": 143.15136433333333,
+   "p99_us": 194.083
+  },
+  "mldsa65": {
+   "mean_us": 1203.3056086666666,
+   "p99_us": 4114.125
+  },
+  "hmac_sha256_qkd_key": {
+   "mean_us": 7.814275666666666,
+   "p99_us": 9.75
+  }
+ },
+ "sizes": {
+  "x25519": {
+   "sent_bytes": 64,
+   "secret": 32
+  },
+  "mlkem768": {
+   "public_key": 1184,
+   "ciphertext": 1088,
+   "secret": 32,
+   "sent_bytes": 2272
+  },
+  "ed25519": {
+   "signature": 64,
+   "public_key": 32
+  },
+  "mldsa65": {
+   "signature": 3309,
+   "public_key": 1952
+  },
+  "hmac_sha256": {
+   "tag": 32,
+   "key": 32
+  },
+  "hybrid": {
+   "sent_bytes": 2336,
+   "secret": 32
+  }
+ }
+}
